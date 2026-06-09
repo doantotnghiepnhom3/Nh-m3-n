@@ -1,0 +1,16 @@
+path: Q:\DO_AN_TOT_NGHIEP\MY_DATASET
+train: images
+val: images
+test: images
+
+
+names:
+  0: nguoi
+  1: den_bat
+  2: den_tat
+  3: quat_bat
+  4: quat_tat
+  5: may_lanh_bat
+  6: may_lanh_tat
+  7: thiet_bi_chieu_bat
+  8: thiet_bi_chieu_tat

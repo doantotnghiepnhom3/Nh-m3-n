@@ -1,0 +1,7 @@
+nguoi
+den_bat
+den_tat
+quat_bat
+quat_tat
+may_lanh_bat
+may_lanh_tat

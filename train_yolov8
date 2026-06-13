@@ -1,0 +1,130 @@
+
+"""
+Object Detection với YOLOv8 — chạy trong VS Code
+=================================================
+Yêu cầu:
+    pip install ultralytics
+ 
+Chạy:
+    python train_yolov8.py
+"""
+ 
+from ultralytics import YOLO
+import os
+import torch
+ 
+# ============================================================
+#  TÙY CHỈNH — chỉnh ở đây
+# ============================================================
+ 
+# Đường dẫn tới file data.yaml của dataset Roboflow
+DATA_YAML = r'Q:\DO_AN_TOT_NGHIEP_NHOM_3\MY_DATASET\canh_bao_nang_luong_yolov8\data.yaml'
+ 
+# Model size:
+#   'yolov8n.pt' — nano   (nhẹ nhất,  GPU yếu dùng)
+#   'yolov8s.pt' — small  (khuyến nghị cho hầu hết máy)
+#   'yolov8m.pt' — medium (cần GPU >= 6GB)
+#   'yolov8l.pt' — large  (cần GPU >= 10GB)
+MODEL_SIZE = 'yolov8s.pt'
+ 
+# Hyperparameters
+NUM_EPOCHS  = 50
+BATCH_SIZE  = 16     # Giảm xuống 8 nếu bị lỗi CUDA out of memory
+IMG_SIZE    = 640    # Chuẩn YOLOv8
+ 
+# Fine-tune từ checkpoint đã train sẵn (nếu có)
+# Để None nếu muốn train từ đầu với pretrained COCO weights
+CHECKPOINT_PATH = None
+# CHECKPOINT_PATH = r'Q:\DO_AN_TOT_NGHIEP_NHOM_3\runs\canh_bao_nang_luong\weights\best.pt'
+ 
+# Thư mục lưu kết quả
+PROJECT_DIR = r'Q:\DO_AN_TOT_NGHIEP_NHOM_3\runs'
+RUN_NAME    = 'canh_bao_nang_luong'
+ 
+# ============================================================
+ 
+ 
+def get_device():
+    if torch.cuda.is_available():
+        print(f"✅ GPU: {torch.cuda.get_device_name(0)}")
+        print(f"   VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+    else:
+        print("⚠️  Không có GPU — train bằng CPU sẽ rất chậm")
+ 
+ 
+def check_dataset():
+    assert os.path.isfile(DATA_YAML), \
+        f"❌ Không tìm thấy file: {DATA_YAML}"
+    print(f"✅ Dataset YAML: {DATA_YAML}")
+ 
+    # Đọc thông tin dataset
+    import yaml
+    with open(DATA_YAML, 'r', encoding='utf-8') as f:
+        cfg = yaml.safe_load(f)
+ 
+    nc = cfg.get('nc', '?')
+    names = cfg.get('names', [])
+    print(f"   Số class : {nc}")
+    print(f"   Tên class: {names}\n")
+    return cfg
+ 
+ 
+def main():
+    print("=" * 55)
+    print("  Object Detection — YOLOv8")
+    print("=" * 55)
+ 
+    get_device()
+    check_dataset()
+ 
+    # Load model
+    if CHECKPOINT_PATH is not None:
+        assert os.path.isfile(CHECKPOINT_PATH), \
+            f"❌ Không tìm thấy checkpoint: {CHECKPOINT_PATH}"
+        print(f"🔄 Load checkpoint: {CHECKPOINT_PATH}\n")
+        model = YOLO(CHECKPOINT_PATH)
+    else:
+        print(f"🧠 Model: {MODEL_SIZE} (pretrained COCO)\n")
+        model = YOLO(MODEL_SIZE)
+ 
+    # Train
+    results = model.train(
+        data      = DATA_YAML,
+        epochs    = NUM_EPOCHS,
+        imgsz     = IMG_SIZE,
+        batch     = BATCH_SIZE,
+        project   = PROJECT_DIR,
+        name      = RUN_NAME,
+        # Augmentation (Roboflow đã augment sẵn, có thể tắt nếu muốn)
+        fliplr    = 0.5,
+        mosaic    = 1.0,
+        # Lưu best và last checkpoint
+        save      = True,
+        # Hiển thị progress
+        verbose   = True,
+    )
+ 
+    print("\n" + "=" * 55)
+    print("✅ Train xong!")
+    best_model_path = os.path.join(PROJECT_DIR, RUN_NAME, 'weights', 'best.pt')
+    print(f"   Best model : {best_model_path}")
+    print(f"   Kết quả    : {os.path.join(PROJECT_DIR, RUN_NAME)}")
+ 
+    # Đánh giá trên test set
+    print("\n🧪 Đánh giá trên Test set...")
+    model_best = YOLO(best_model_path)
+    metrics = model_best.val(
+        data   = DATA_YAML,
+        split  = 'test',
+        imgsz  = IMG_SIZE,
+    )
+ 
+    print(f"\n🎯 Kết quả Test:")
+    print(f"   mAP50     : {metrics.box.map50:.4f}")
+    print(f"   mAP50-95  : {metrics.box.map:.4f}")
+    print(f"   Precision : {metrics.box.mp:.4f}")
+    print(f"   Recall    : {metrics.box.mr:.4f}")
+ 
+ 
+if __name__ == '__main__':
+    main()

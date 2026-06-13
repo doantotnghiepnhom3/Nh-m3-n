@@ -1,20 +1,13 @@
-names:
-- den_off
-- den_on
-- maylanh_off
-- maylanh_on
-- nguoi
-- quat_off
-- quat_on
-- tivi_off
-- tivi_on
-nc: 9
-roboflow:
-  license: CC BY 4.0
-  project: canh_bao_nang_luong-tmuag
-  url: https://universe.roboflow.com/qun-ng-hong-zd318/canh_bao_nang_luong-tmuag/dataset/4
-  version: 4
-  workspace: qun-ng-hong-zd318
-test: ../test/images
 train: ../train/images
 val: ../valid/images
+test: ../test/images
+
+nc: 9
+names: ['den_off', 'den_on', 'maylanh_off', 'maylanh_on', 'nguoi', 'quat_off', 'quat_on', 'tivi_off', 'tivi_on']
+
+roboflow:
+  workspace: qun-ng-hong-zd318
+  project: canh_bao_nang_luong-tmuag
+  version: 4
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/qun-ng-hong-zd318/canh_bao_nang_luong-tmuag/dataset/4
